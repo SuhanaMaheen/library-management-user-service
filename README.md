@@ -8,7 +8,7 @@ Make sure you have the following installed:
 ## Clone the Repository
 ```sh
 git clone https://github.com/SuhanaMaheen/library-management-user-service.git
-cd your-repo
+cd library-management-user-service
 ```
 
 ## Running the Application
