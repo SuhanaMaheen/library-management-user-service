@@ -28,15 +28,9 @@ Run the JAR file:
 java -jar target/your-app-name.jar
 ```
 
-## Accessing the Application
-Once started, access the application at:
-```
-http://localhost:8080
-```
-
 ## API Documentation
 If using Swagger, access API docs at:
 ```
-http://localhost:8080/swagger-ui.html
+http://localhost:8081/swagger-ui/index.html#
 ```
 
