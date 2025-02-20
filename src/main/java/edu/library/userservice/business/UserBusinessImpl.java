@@ -30,9 +30,8 @@ public class UserBusinessImpl implements UserBusiness {
     }
 
     @Override
-    public Optional<User> getUser(String userId) throws Exception {
-        Optional<User> user = userRepository.findUsersByUserId(Integer.parseInt(userId));
-        return user;
+    public Optional<User> getUser(String userId)  {
+        return userRepository.findUsersByUserId(Integer.parseInt(userId));
     }
 
     @Override

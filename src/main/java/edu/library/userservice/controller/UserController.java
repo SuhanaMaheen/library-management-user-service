@@ -2,7 +2,6 @@ package edu.library.userservice.controller;
 
 import edu.library.userservice.dto.UserDto;
 import edu.library.userservice.dto.UserResponse;
-import edu.library.userservice.model.User;
 import edu.library.userservice.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -20,10 +19,13 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.Objects;
 
-import static org.springframework.http.MediaType.*;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 
 @RestController
 @Validated
@@ -38,16 +40,23 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Bad request - Invalid input data"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    @PostMapping(value = "/register", consumes = MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> registerUser(
+    @PostMapping(value = "/register", consumes = MULTIPART_FORM_DATA_VALUE, produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserResponse<String>> registerUser(
             @Valid @RequestPart("User") UserDto request,
-            @Parameter(description = "User Image", required = true, content = @Content(mediaType = "multipart/form-data"))
+            @Parameter(description = "User Image  (Only JPG Allowded)", required = true, content = @Content(mediaType = "multipart/form-data"))
             @RequestPart("photo") MultipartFile photo) throws Exception {
         try {
+            String contentType = photo.getContentType();
+            if (contentType == null || !contentType.equalsIgnoreCase("image/jpeg")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new UserResponse<>(HttpStatus.BAD_REQUEST.name(), HttpStatus.BAD_REQUEST.name(), "Only JPG images are allowed."));
+
+            }
             userService.registerUser(request, photo);
-            return ResponseEntity.ok("User registered successfully");
+            return ResponseEntity.ok(new UserResponse<>(HttpStatus.OK.name(), "User Registerd successfully"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new UserResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.name(), e.getMessage()));
         }
     }
 
@@ -69,7 +78,7 @@ public class UserController {
             return ResponseEntity.ok(new UserResponse<>(HttpStatus.OK.name(), "User login successfully", user));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new UserResponse<>(HttpStatus.NOT_FOUND.name(), e.getMessage(), user));
+                    .body(new UserResponse<>(HttpStatus.NOT_FOUND.name(), e.getMessage()));
         }
     }
 
@@ -82,14 +91,14 @@ public class UserController {
     @GetMapping(value = "/getUser", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<UserResponse<UserDto>> getUser(
             @Parameter(description = "User Id", required = true)
-            @RequestParam("userId") String userId) throws Exception {
+            @RequestParam("userId") String userId) {
         UserDto user = null;
         try {
             user = userService.getUser(userId);
             return ResponseEntity.ok(new UserResponse<>(HttpStatus.FOUND.name(), "User fetched successfully", user));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new UserResponse<>(HttpStatus.NOT_FOUND.name(), e.getMessage(), user));
+                    .body(new UserResponse<>(HttpStatus.NOT_FOUND.name(), e.getMessage()));
         }
     }
 
@@ -99,18 +108,18 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Bad request - Invalid input data"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    @PostMapping(value = "/updateUser/{userId}",consumes = MULTIPART_FORM_DATA_VALUE,produces = APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/updateUser/{userId}", consumes = MULTIPART_FORM_DATA_VALUE, produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<UserResponse<UserDto>> updateUser(
             @PathVariable String userId,
             @Parameter(description = "Name")
-            @RequestParam(value = "name",required = false) String name,
+            @RequestParam(value = "name", required = false) String name,
             @Parameter(description = "phoneNumber")
-            @RequestParam(value = "phoneNumber",required = false) String phoneNumber,
+            @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
             @Parameter(description = "photo")
-            @RequestPart(value = "photo",required = false) MultipartFile photo,
+            @RequestPart(value = "photo", required = false) MultipartFile photo,
             @Parameter(description = "password")
-            @RequestParam(value = "password",required = false) String password
-            ) throws Exception {
+            @RequestParam(value = "password", required = false) String password
+    ) throws Exception {
 
         UserDto user = null;
         try {
@@ -118,7 +127,7 @@ public class UserController {
             return ResponseEntity.ok(new UserResponse<>(HttpStatus.OK.name(), "User Updated successfully", user));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new UserResponse<>(HttpStatus.NOT_FOUND.name(), e.getMessage(), user));
+                    .body(new UserResponse<>(HttpStatus.NOT_FOUND.name(), e.getMessage()));
         }
     }
 
@@ -141,10 +150,10 @@ public class UserController {
 
         } catch (FileNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new UserResponse<>(HttpStatus.NOT_FOUND.name(), e.getMessage(), null));
+                    .body(new UserResponse<>(HttpStatus.NOT_FOUND.name(), e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new UserResponse<>(HttpStatus.NOT_FOUND.name(), e.getMessage(), null));
+                    .body(new UserResponse<>(HttpStatus.NOT_FOUND.name(), e.getMessage()));
         }
         return null;
     }

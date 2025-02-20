@@ -2,8 +2,9 @@ package edu.library.userservice.service;
 
 import edu.library.userservice.business.UserBusiness;
 import edu.library.userservice.dto.UserDto;
-import edu.library.userservice.model.User;
+import edu.library.userservice.exception.UserNotFoundException;
 import edu.library.userservice.mapper.UserMapper;
+import edu.library.userservice.model.User;
 import edu.library.userservice.util.FileUploadService;
 import edu.library.userservice.validation.RequestValidator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,12 +58,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto getUser(String userId) throws Exception {
+    public UserDto getUser(String userId) {
+        UserDto userDto = new UserDto();
         Optional<User> user = userBusiness.getUser(userId);
         if (user.isPresent()) {
-            return userMapper.toUserDto(user.get());
+            userDto = userMapper.toUserDto(user.get());
+            return userDto;
         } else {
-            throw new Exception("User not found");
+            throw new UserNotFoundException("User not found");
         }
 
     }
@@ -77,7 +80,7 @@ public class UserServiceImpl implements UserService {
     public UserDto login(String userId, String password) throws Exception {
         UserDto user = this.getUser(userId);
         if (user == null) {
-            throw new Exception("User Id not found");
+            throw new UserNotFoundException("User Id not found");
         }
         if (!(passwordEncoder.matches(password, user.getPassword()))) {
             throw new Exception("Password Incorrect");
@@ -89,7 +92,7 @@ public class UserServiceImpl implements UserService {
     public UserDto updateUser(String userId, String name, String phoneNumber, String password, MultipartFile photo) throws Exception {
         String encPassword = null;
         String photoPath = null;
-        if(name==null&&phoneNumber==null&&password==null&&photo==null){
+        if (name == null && phoneNumber == null && password == null && photo == null) {
             throw new Exception("Atleast one field is required to update user");
         }
         if (password != null) {
